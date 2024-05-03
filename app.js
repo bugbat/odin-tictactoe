@@ -66,14 +66,22 @@ function checkFreeSpace(board, coord = null) {
     }
   }
   else if (coord !== null) {
-    const yx = coord.split('');
-    const y = Number(yx[0]);
-    const x = Number(yx[1]);
-    if (b[y][x] !== '') {
+    const coord_dict = convertInput(coord)
+    if (b[coord_dict.row][coord_dict.col] !== '') {
       return false;
     }
   }
   return true;
+}
+
+// convert coordinate input to array to place marker on board
+function convertInput(input) {
+  const row_col = input.split('');
+  const coord_dict = {
+    row: Number(row_col[0]),
+    col: Number(row_col[1])
+  };
+  return coord_dict;
 }
 
 // game state
