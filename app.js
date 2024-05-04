@@ -85,9 +85,14 @@ function convertInput(input) {
 }
 
 // game state
-function gameState(p1, p2, board) {
-  let gameActive = true;
+function createGame() {
+  const board = createGameboard();
+  const p1 = createPlayer('p1', 'X');
+  const p2 = createPlayer('p2', 'O');
+
+  let active = true;
   let playerTurn = 'p1';
+  return { board, p1, p2, active, playerTurn }
 }
 
 // prompt for move and place marker
@@ -95,7 +100,5 @@ function getMove() {
 
 }
 
-// set up game
-const myBoard = createGameboard();
-const p1 = createPlayer('p1', 'X');
-const p2 = createPlayer('p2', 'O');
+const game = createGame()
+
