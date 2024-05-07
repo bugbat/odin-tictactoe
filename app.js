@@ -1,9 +1,9 @@
 // game board
 function createGameboard() {
-  //let gameboard = [['', '', ''], ['', '', ''], ['', '', '']]; //empty
-  let gameboard = [['o', 'x', 'o'], ['x', 'o', 'x'], ['x', 'o', 'x']]; // tie
-  //let gameboard = [['x', 'x', 'x'], ['x', 'x', 'o'], ['o', 'x', 'x']]; // x
-  //let gameboard = [['o', 'o', 'o'], ['x', 'x', 'o'], ['o', 'x', 'x']]; // o
+  let gameboard = [['', '', ''], ['', '', ''], ['', '', '']]; //empty
+  //let gameboard = [['o', 'x', 'o'], ['x', 'o', 'x'], ['x', 'o', 'x']]; // tie
+  //let gameboard = [['x', 'x', 'x'], ['x', 'x', 'o'], ['o', 'x', 'x']]; // x row
+  //let gameboard = [['o', 'o', 'x'], ['x', 'o', 'x'], ['o', 'x', 'x']]; // x column
 
   const getGameboard = () => gameboard;
   const updateGameboard = (marker, row, col) => {
@@ -35,12 +35,13 @@ function checkForWinner(board) {
   }
 
   // check rows and cols for winner
-  for (i = 0; i < board.length; i++) {
+  for (let i = 0; i < board.length; i++) {
     if (board[i].every(mark => mark === board[i][0]) && board[i][0] !== '') {
       return board[i][0];
     }
-    else if (board[i][0] === board[i][1] === board[i][2] && board[i][0] !== '') {
-      return board[i][0];
+    // cols
+    else if (board[0][i] === board[1][i] && board[1][i] === board[2][i] && board[0][i] !== '') {
+      return board[0][i];
     }
   }
   // if no winner, check for tie
@@ -53,7 +54,7 @@ function checkForWinner(board) {
 
 // check if board full
 function checkFreeSpace(board, coord = null) {
-  // if given no coordinate, checks it the board is full
+  // if given no coordinate, checks if the board is full
   if (coord === null) {
     let fullBoard = []
     for (i = 0; i < board.length; i++) {
@@ -66,7 +67,7 @@ function checkFreeSpace(board, coord = null) {
 
   // if given coordinate, checks that specific space
   else if (coord !== null) {
-    if (board[coord_dict.row][coord_dict.col] !== '') {
+    if (board[coord.row][coord.col] !== '') {
       return false;
     }
   }
@@ -90,9 +91,10 @@ function createGame() {
   const p2 = createPlayer('p2', 'O');
 
   let active = true;
+  let winner = '';
+
   let currentPlayer = p1;
   const getCurrentPlayer = () => currentPlayer;
-
 
   const swapCurrentPlayer = () => {
     if (currentPlayer === p1) {
@@ -103,19 +105,46 @@ function createGame() {
     }
   }
 
-  return { board, p1, p2, active, getCurrentPlayer, swapCurrentPlayer }
+  return { board, p1, p2, active, winner, getCurrentPlayer, swapCurrentPlayer }
 }
 
 // 1 'turn' of the game
 function gameRound(game, input) {
-  board = game.getGameboard();
-  move = convertInput(input);
-  if (checkFreeSpace(board, move)) {
+  const playerMarker = game.getCurrentPlayer().getMarker();
+  const board = game.board.getGameboard();
+  const coord = convertInput(input);
+  
+  console.log('game turn initiated');
+
+  if (checkFreeSpace(board, coord) && game.active) {
+    game.board.updateGameboard(playerMarker, coord.row, coord.col);
+  }
+  else {
+    return false;
+  }
+  
+  if (checkForWinner(board)) {
+    game.winner = game.getCurrentPlayer();
+  }
+
+  game.swapCurrentPlayer();
+  updatePlayerInfo(game);
 
   }
-}
 
-// set up dom variables
+// dom related functions
+function initiateDomBoard() {
+  const gameboard_div = document.querySelectorAll('button.cell');
+
+  gameboard_div.forEach(cell => {
+    cell.addEventListener('click', function() {
+      const input = cell.getAttribute('data-coord');
+      if (gameRound(myGame, input)) {
+        cell.textContent = myGame.getCurrentPlayer().getMarker();
+      }
+    });
+  });
+}
 
 // updates player info panel with game elements
 function updatePlayerInfo(game) {
@@ -123,7 +152,7 @@ function updatePlayerInfo(game) {
   while(div.firstChild) { 
     div.removeChild(div.firstChild); 
   }
-  
+
   const p1 = document.createElement("p");
   p1.textContent = "Player 1: " + game.p1.getName();
   const p2 = document.createElement("p");
@@ -136,7 +165,21 @@ function updatePlayerInfo(game) {
   div.append(p1, p2, turn);
 }
 
-// initiate game
-const myGame = createGame()
+// add a winner to dom
+function addWinner(game) {
+  const div = document.querySelector("#score");
 
-updatePlayerInfo(myGame)
+  while(div.firstChild) { 
+    div.removeChild(div.firstChild); 
+  }
+
+  const winner = document.createElement("p");
+  winner.textContent = game.p1.getName();
+
+  div.append(p1, p2, turn);
+}
+
+// initiate game
+const myGame = createGame();
+initiateDomBoard();
+updatePlayerInfo(myGame);
