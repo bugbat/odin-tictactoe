@@ -1,13 +1,23 @@
 button.cell {
-  height: 50px;
-  font-size: 2em;
+  height: 100px;
+  font-size: 3em;
 }
 
 #gameboard {
-
+  display: grid;
+  gap: 10px
+  
 }
 
 .row {
   display: grid;
-  grid-template-columns: 50px 50px 50px;
+  grid-template-columns: 100px 100px 100px;
+  gap: 10px;
+}
+
+#bottom {
+  display: grid;
+
+  grid-template-columns: 150px 150px;
+  gap: 10px
 }

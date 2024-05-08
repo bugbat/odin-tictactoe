@@ -1,3 +1,35 @@
+// game logic and state object
+function createGame() {
+  const board = createGameboard();
+  const p1 = createPlayer('p1', 'X');
+  const p2 = createPlayer('p2', 'O');
+
+  let active = true;
+  let winner = null;
+
+  let currentPlayer = p1;
+  const getCurrentPlayer = () => currentPlayer;
+  const swapCurrentPlayer = () => {
+    if (currentPlayer === p1) {
+      currentPlayer = p2;
+    }
+    else {
+      currentPlayer = p1;
+    }
+  }
+
+  const resetGame = () => {
+    board.resetBoard();
+    active = true;
+    winner = null;
+    currentPlayer = p1;
+    resetDomBoard();
+    updatePlayerInfo(myGame);
+  }
+
+  return { board, p1, p2, active, winner, getCurrentPlayer, swapCurrentPlayer, resetGame }
+}
+
 // game board
 function createGameboard() {
   let gameboard = [['', '', ''], ['', '', ''], ['', '', '']]; //empty
@@ -9,19 +41,26 @@ function createGameboard() {
   const updateGameboard = (marker, row, col) => {
     gameboard[row][col] = marker;
   };
+  const resetBoard = () => {
+    gameboard = [['', '', ''], ['', '', ''], ['', '', '']];
+  }
 
-  return { getGameboard, updateGameboard };
+  return { getGameboard, updateGameboard, resetBoard };
 }
 
 // player - 1 & 2 based on same object
 function createPlayer(name, marker) {
   let score = 0;
   const getName = () => name;
+  const changeName = (newName) => {
+    name = newName;
+  }
+
   const getMarker = () => marker;
 
   const getScore = () => score;
   const addScore = () => ++score;
-  return { getName, getMarker, getScore, addScore };
+  return { getName, changeName, getMarker, getScore, addScore };
 }
 
 // win+tie checking
@@ -64,7 +103,6 @@ function checkFreeSpace(board, coord = null) {
       return false;
     }
   }
-
   // if given coordinate, checks that specific space
   else if (coord !== null) {
     if (board[coord.row][coord.col] !== '') {
@@ -82,30 +120,6 @@ function convertInput(input) {
     col: Number(row_col[1])
   };
   return coord_dict;
-}
-
-// game logic and state object
-function createGame() {
-  const board = createGameboard();
-  const p1 = createPlayer('p1', 'X');
-  const p2 = createPlayer('p2', 'O');
-
-  let active = true;
-  let winner = null;
-
-  let currentPlayer = p1;
-  const getCurrentPlayer = () => currentPlayer;
-
-  const swapCurrentPlayer = () => {
-    if (currentPlayer === p1) {
-      currentPlayer = p2;
-    }
-    else {
-      currentPlayer = p1;
-    }
-  }
-
-  return { board, p1, p2, active, winner, getCurrentPlayer, swapCurrentPlayer }
 }
 
 // 1 'turn' of the game
@@ -142,16 +156,22 @@ function gameRound(game, cell) {
     game.swapCurrentPlayer();
     updatePlayerInfo(game);
   }
-  }
+}
 
 // dom related functions
 function initiateDomBoard() {
   const gameboard_div = document.querySelectorAll('button.cell');
-
   gameboard_div.forEach(cell => {
     cell.addEventListener('click', function() {
-      gameRound(myGame, cell)
+      gameRound(myGame, cell);
     });
+  });
+}
+
+function resetDomBoard() {
+  const gameboard_div = document.querySelectorAll('button.cell');
+  gameboard_div.forEach(cell => {
+    cell.textContent = '';
   });
 }
 
