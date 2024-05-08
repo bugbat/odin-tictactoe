@@ -27,10 +27,10 @@ function createPlayer(name, marker) {
 // win+tie checking
 function checkForWinner(board) {
   // check diagonals for winner
-  if (board[0][0] === board[1][1] === board[2][2] && board[1][1] !== '') {
+  if (board[0][0] === board[1][1] && board[1][1] === board[2][2] && board[1][1] !== '') {
     return board[0][0];
   }
-  else if (board[0][2] === board[1][1] === board[2][0] && board[1][1] !== '') {
+  else if (board[0][2] === board[1][1] && board[1][1] === board[2][0] && board[1][1] !== '') {
     return board[0][2];
   }
 
@@ -84,14 +84,14 @@ function convertInput(input) {
   return coord_dict;
 }
 
-// game state
+// game logic and state object
 function createGame() {
   const board = createGameboard();
   const p1 = createPlayer('p1', 'X');
   const p2 = createPlayer('p2', 'O');
 
   let active = true;
-  let winner = '';
+  let winner = null;
 
   let currentPlayer = p1;
   const getCurrentPlayer = () => currentPlayer;
@@ -109,27 +109,39 @@ function createGame() {
 }
 
 // 1 'turn' of the game
-function gameRound(game, input) {
+function gameRound(game, cell) {
   const playerMarker = game.getCurrentPlayer().getMarker();
   const board = game.board.getGameboard();
-  const coord = convertInput(input);
+  const coord = convertInput(cell.getAttribute('data-coord'));
   
   console.log('game turn initiated');
 
   if (checkFreeSpace(board, coord) && game.active) {
-    game.board.updateGameboard(playerMarker, coord.row, coord.col);
+    game.board.updateGameboard(playerMarker, coord.row, coord.col); // update board
+    cell.textContent = myGame.getCurrentPlayer().getMarker(); // update dom
   }
   else {
+    console.log('invalid')
     return false;
   }
   
   if (checkForWinner(board)) {
-    game.winner = game.getCurrentPlayer();
+    if (checkForWinner(board) === 'tie') {
+      game.active = false;
+      game.winner = 'Tie'
+      addWinner(game.winner);
+    }
+    else {
+      game.active = false;
+      game.winner = game.getCurrentPlayer();
+      game.winner.addScore();
+      addWinner(game.winner.getName());
+    }
   }
-
-  game.swapCurrentPlayer();
-  updatePlayerInfo(game);
-
+  else {
+    game.swapCurrentPlayer();
+    updatePlayerInfo(game);
+  }
   }
 
 // dom related functions
@@ -138,10 +150,7 @@ function initiateDomBoard() {
 
   gameboard_div.forEach(cell => {
     cell.addEventListener('click', function() {
-      const input = cell.getAttribute('data-coord');
-      if (gameRound(myGame, input)) {
-        cell.textContent = myGame.getCurrentPlayer().getMarker();
-      }
+      gameRound(myGame, cell)
     });
   });
 }
@@ -166,17 +175,17 @@ function updatePlayerInfo(game) {
 }
 
 // add a winner to dom
-function addWinner(game) {
+function addWinner(winner) {
   const div = document.querySelector("#score");
 
   while(div.firstChild) { 
     div.removeChild(div.firstChild); 
   }
 
-  const winner = document.createElement("p");
-  winner.textContent = game.p1.getName();
+  const winningPlayer = document.createElement("p");
+  winningPlayer.textContent = winner;
 
-  div.append(p1, p2, turn);
+  div.append(winningPlayer);
 }
 
 // initiate game
