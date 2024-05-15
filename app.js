@@ -1,8 +1,8 @@
 // game logic and state object
 function createGame() {
   const board = createGameboard();
-  const p1 = createPlayer('p1', 'X');
-  const p2 = createPlayer('p2', 'O');
+  const p1 = createPlayer('Player 1', 'X');
+  const p2 = createPlayer('Player 2', 'O');
 
   let active = true;
   const getStatus = () => active;
@@ -22,6 +22,10 @@ function createGame() {
   };
 
   let currentPlayer = p1;
+
+  let ties = 0;
+  const getTies = () => ties;
+  const addTie = () => ++ties;
 
   const getCurrentPlayer = () => currentPlayer;
   const swapCurrentPlayer = () => {
@@ -43,7 +47,7 @@ function createGame() {
     addWinner(winner);
   };
 
-  return { getWinner, setWinner, board, p1, p2, getStatus, swapStatus, getCurrentPlayer, swapCurrentPlayer, resetGame };
+  return { getTies, addTie, getWinner, setWinner, board, p1, p2, getStatus, swapStatus, getCurrentPlayer, swapCurrentPlayer, resetGame };
 }
 
 // game board
@@ -144,24 +148,27 @@ function gameRound(game, cell) {
   const board = game.board.getGameboard();
   const coord = convertInput(cell.getAttribute('data-coord'));
   
-  console.log('game turn initiated');
-
   if (checkFreeSpace(board, coord) && game.getStatus()) {
     game.board.updateGameboard(playerMarker, coord.row, coord.col); // update board
     cell.textContent = game.getCurrentPlayer().getMarker(); // update dom
   }
-  else {
-    console.log('invalid');
+  // prompts to start a new game if game is over and user tries to select board
+  else if (!game.getStatus()){
     if (confirm("Game over! Start a new round?")) {
       game.resetGame();
     };
     return;
   }
-  
+  // do nothing if game is still active and use selects occupied space
+  else {
+    return;
+  }
+
   if (checkForWinner(board)) {
     if (checkForWinner(board) === 'tie') {
       game.swapStatus();
       game.setWinner('Tie');
+      game.addTie();
       addWinner(game.getWinner());
     }
     else {
@@ -173,8 +180,8 @@ function gameRound(game, cell) {
   }
   else {
     game.swapCurrentPlayer();
-    updatePlayerInfo();
   }
+  updatePlayerInfo()
 }
 
 // dom related functions
@@ -196,30 +203,43 @@ function resetDomBoard() {
 
 // updates player info panel with game elements
 function updatePlayerInfo() {
-  const div = document.querySelector("#playerinfo");
-  while(div.firstChild) { 
-    div.removeChild(div.firstChild); 
+  const info = document.querySelector("#playerinfo");
+  while(info.firstChild) { 
+    info.removeChild(info.firstChild); 
+  }
+
+  const score = document.querySelector("#score");
+  while(score.firstChild) { 
+    score.removeChild(score.firstChild); 
   }
 
   const player1 = document.createElement("p");
-  player1.textContent = "Player 1: " + myGame.p1.getName();
+  player1.textContent = myGame.p1.getName() + ' (' + myGame.p1.getMarker() + ')';
   const player2 = document.createElement("p");
-  player2.textContent = "Player 2: " + myGame.p2.getName();
+  player2.textContent = myGame.p2.getName() + ' (' + myGame.p2.getMarker() + ')';
   if (myGame.getCurrentPlayer() === myGame.p1) {
     player1.textContent = "➡ " + player1.textContent;
   }
   else {
       player2.textContent = "➡ " + player2.textContent;
     }
-  div.append(player1, player2);
+  info.append(player1, player2);
+
+  const player1score = document.createElement("p");
+  player1score.textContent = 'P1: ' + myGame.p1.getScore() + ' win(s)';
+  const player2score = document.createElement("p");
+  player2score.textContent = 'P2: ' + myGame.p2.getScore() + ' win(s)';
+  const ties = document.createElement("p");
+  ties.textContent = 'Ties: ' + myGame.getTies();
+  score.append(player1score, player2score, ties);
 }
 
 // add a winner to dom
 function addWinner(winner) {
-  const div = document.querySelector("#score");
+  const div = document.querySelector("#winner");
 
   while(div.firstChild) { 
-    div.removeChild(div.firstChild); 
+    div.removeChild(div.firstChild);
   }
 
   if (winner === null) {
@@ -228,8 +248,13 @@ function addWinner(winner) {
 
   const winningPlayer = document.createElement("p");
   winningPlayer.textContent = "Winner: " + winner;
+  const restartBtn = document.createElement("button");
+  restartBtn.textContent = 'Start a new game';
+  restartBtn.addEventListener('click', function() {
+    myGame.resetGame()
+  });
 
-  div.append(winningPlayer);
+  div.append(winningPlayer, restartBtn);
 }
 
 // initiate game
