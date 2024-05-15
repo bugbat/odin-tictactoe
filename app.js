@@ -5,9 +5,24 @@ function createGame() {
   const p2 = createPlayer('p2', 'O');
 
   let active = true;
+  const getStatus = () => active;
+  const swapStatus = () => {
+    if (active) {
+      active = false;
+    }
+    else {
+      active = true;;
+    }
+  };
+
   let winner = null;
+  const getWinner = () => winner;
+  const setWinner = (victor) => {
+    winner = victor;
+  };
 
   let currentPlayer = p1;
+
   const getCurrentPlayer = () => currentPlayer;
   const swapCurrentPlayer = () => {
     if (currentPlayer === p1) {
@@ -16,7 +31,7 @@ function createGame() {
     else {
       currentPlayer = p1;
     }
-  }
+  };
 
   const resetGame = () => {
     board.resetBoard();
@@ -24,10 +39,11 @@ function createGame() {
     winner = null;
     currentPlayer = p1;
     resetDomBoard();
-    updatePlayerInfo(myGame);
-  }
+    updatePlayerInfo();
+    addWinner(winner);
+  };
 
-  return { board, p1, p2, active, winner, getCurrentPlayer, swapCurrentPlayer, resetGame }
+  return { getWinner, setWinner, board, p1, p2, getStatus, swapStatus, getCurrentPlayer, swapCurrentPlayer, resetGame };
 }
 
 // game board
@@ -43,7 +59,7 @@ function createGameboard() {
   };
   const resetBoard = () => {
     gameboard = [['', '', ''], ['', '', ''], ['', '', '']];
-  }
+  };
 
   return { getGameboard, updateGameboard, resetBoard };
 }
@@ -130,31 +146,34 @@ function gameRound(game, cell) {
   
   console.log('game turn initiated');
 
-  if (checkFreeSpace(board, coord) && game.active) {
+  if (checkFreeSpace(board, coord) && game.getStatus()) {
     game.board.updateGameboard(playerMarker, coord.row, coord.col); // update board
-    cell.textContent = myGame.getCurrentPlayer().getMarker(); // update dom
+    cell.textContent = game.getCurrentPlayer().getMarker(); // update dom
   }
   else {
-    console.log('invalid')
-    return false;
+    console.log('invalid');
+    if (confirm("Game over! Start a new round?")) {
+      game.resetGame();
+    };
+    return;
   }
   
   if (checkForWinner(board)) {
     if (checkForWinner(board) === 'tie') {
-      game.active = false;
-      game.winner = 'Tie'
-      addWinner(game.winner);
+      game.swapStatus();
+      game.setWinner('Tie');
+      addWinner(game.getWinner());
     }
     else {
-      game.active = false;
-      game.winner = game.getCurrentPlayer();
-      game.winner.addScore();
-      addWinner(game.winner.getName());
+      game.swapStatus();
+      game.setWinner(game.getCurrentPlayer());
+      game.getWinner().addScore();
+      addWinner(game.getWinner().getName());
     }
   }
   else {
     game.swapCurrentPlayer();
-    updatePlayerInfo(game);
+    updatePlayerInfo();
   }
 }
 
@@ -176,22 +195,23 @@ function resetDomBoard() {
 }
 
 // updates player info panel with game elements
-function updatePlayerInfo(game) {
+function updatePlayerInfo() {
   const div = document.querySelector("#playerinfo");
   while(div.firstChild) { 
     div.removeChild(div.firstChild); 
   }
 
-  const p1 = document.createElement("p");
-  p1.textContent = "Player 1: " + game.p1.getName();
-  const p2 = document.createElement("p");
-  p2.textContent = "Player 2: " + game.p2.getName();
-
-  const turn = document.createElement("p");
-  turn.textContent = game.getCurrentPlayer().getName();
-
-
-  div.append(p1, p2, turn);
+  const player1 = document.createElement("p");
+  player1.textContent = "Player 1: " + myGame.p1.getName();
+  const player2 = document.createElement("p");
+  player2.textContent = "Player 2: " + myGame.p2.getName();
+  if (myGame.getCurrentPlayer() === myGame.p1) {
+    player1.textContent = "➡ " + player1.textContent;
+  }
+  else {
+      player2.textContent = "➡ " + player2.textContent;
+    }
+  div.append(player1, player2);
 }
 
 // add a winner to dom
@@ -202,8 +222,12 @@ function addWinner(winner) {
     div.removeChild(div.firstChild); 
   }
 
+  if (winner === null) {
+    return;
+  }
+
   const winningPlayer = document.createElement("p");
-  winningPlayer.textContent = winner;
+  winningPlayer.textContent = "Winner: " + winner;
 
   div.append(winningPlayer);
 }

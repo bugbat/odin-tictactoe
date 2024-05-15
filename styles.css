@@ -5,8 +5,8 @@ button.cell {
 
 #gameboard {
   display: grid;
-  gap: 10px
-  
+  gap: 10px;
+  justify-content: center;
 }
 
 .row {
@@ -17,7 +17,7 @@ button.cell {
 
 #bottom {
   display: grid;
-
+  justify-content: center;
   grid-template-columns: 150px 150px;
   gap: 10px
 }
